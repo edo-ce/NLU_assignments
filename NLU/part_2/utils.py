@@ -58,8 +58,10 @@ class IntentsAndSlots(Dataset):
             utt = utt.split()
             # slot = slot.split()
 
-            tokenized_inputs = self.tokenizer(utt, truncation=True, is_split_into_words=True, padding="max_length",
-                                            max_length=512, return_tensors="pt")
+            tokenized_inputs = self.tokenizer(utt, truncation=True, is_split_into_words=True)
+            print(tokenized_inputs)
+            raise Exception("STOP HERE")
+            # tokenized_inputs = self.tokenizer(utt, truncation=True, is_split_into_words=True, padding="max_length", max_length=512, return_tensors="pt")
 
             # padding and special tokens are None
             word_ids = tokenized_inputs.word_ids(batch_index=0)
@@ -150,6 +152,7 @@ def get_data(train_path, test_path):
     print('Train samples:', len(tmp_train_raw))
     print('Test samples:', len(test_raw))
     pprint(tmp_train_raw[0])
+    print()
 
     intents = get_intents(tmp_train_raw, test_raw)
     slots = get_slots(tmp_train_raw, test_raw)
@@ -157,6 +160,10 @@ def get_data(train_path, test_path):
     lang = Lang(intents, slots)
 
     train_raw, dev_raw = split_test(tmp_train_raw)
+    print('Train data has been splitted')
+    print('TRAIN size:', len(train_raw))
+    print('DEV size:', len(dev_raw))
+    print('TEST size:', len(test_raw), '\n')
 
     train_dataset = IntentsAndSlots(train_raw, lang)
     dev_dataset = IntentsAndSlots(dev_raw, lang)

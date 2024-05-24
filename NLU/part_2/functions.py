@@ -2,7 +2,7 @@
 # Here is where you define the architecture of your model using pytorch
 import torch
 import numpy as np
-import torch.optim as optim
+import os
 from conll import evaluate
 from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
@@ -83,6 +83,16 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
                                           zero_division=False, output_dict=True)
     return results, report_intent, loss_array
 
+def plot_train_dev_loss(sampled_epochs, losses_train, losses_dev):
+    plt.figure(num = 3, figsize=(8, 5)).patch.set_facecolor('white')
+    plt.title('Train and Dev Losses')
+    plt.ylabel('Loss')
+    plt.xlabel('Epochs')
+    plt.plot(sampled_epochs, losses_train, label='Train loss')
+    plt.plot(sampled_epochs, losses_dev, label='Dev loss')
+    plt.legend()
+    plt.show()
+
 def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_epochs=200, patience=3):
     losses_train = []
     losses_dev = []
@@ -116,3 +126,10 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
                                             criterion_intents, model, lang)
     print('Slot F1: ', results_test['total']['f'])
     print('Intent Accuracy:', intent_test['accuracy'])
+
+    plot_train_dev_loss(sampled_epochs, losses_train, losses_dev)
+
+def save_model(model_name, obj):
+    PATH = os.path.join("bin", model_name)
+    saving_object = obj
+    torch.save(saving_object, PATH)

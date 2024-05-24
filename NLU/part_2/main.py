@@ -5,7 +5,7 @@
 from functions import *
 from model import *
 from utils import *
-import os
+import torch.optim as optim
 
 def main(
         train_path,
@@ -18,7 +18,8 @@ def main(
 
     data = get_data(train_path, test_path)
     lang = data["lang"]
-
+    
+    '''
     num_intents = len(lang.intent2id)
     num_slots = len(lang.slot2id)
 
@@ -31,17 +32,16 @@ def main(
     criterion_intents = nn.CrossEntropyLoss() # Because we do not have the pad token
 
     train(data, model, optimizer, criterion_slots, criterion_intents, clip=clip)
+    '''
 
 if __name__ == "__main__":
     device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
+    print(f"Using {device} device")
 
     # TODO: remove after debugging
     os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
     
-    train_path = os.path.join('dataset','ATIS','train.json')
-    test_path = os.path.join('dataset','ATIS','test.json')
+    train_path = os.path.join('datasets','ATIS','train.json')
+    test_path = os.path.join('datasets','ATIS','test.json')
 
-    print(train_path)
-    print(test_path)
-
-    # main(train_path, test_path, device=device)
+    main(train_path, test_path, device=device)
