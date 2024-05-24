@@ -14,12 +14,9 @@ def main(
         clip=5,
         device='cuda:0'
 ):
-    PAD_TOKEN = 0
-
     data = get_data(train_path, test_path)
     lang = data["lang"]
-    
-    '''
+
     num_intents = len(lang.intent2id)
     num_slots = len(lang.slot2id)
 
@@ -32,16 +29,14 @@ def main(
     criterion_intents = nn.CrossEntropyLoss() # Because we do not have the pad token
 
     train(data, model, optimizer, criterion_slots, criterion_intents, clip=clip)
-    '''
 
 if __name__ == "__main__":
-    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    print(f"Using {device} device")
+    print(f"Using {DEVICE} device")
 
     # TODO: remove after debugging
     os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
     
-    train_path = os.path.join('datasets','ATIS','train.json')
-    test_path = os.path.join('datasets','ATIS','test.json')
+    train_path = os.path.join('..','..','datasets','ATIS','train.json')
+    test_path = os.path.join('..','..','datasets','ATIS','test.json')
 
-    main(train_path, test_path, device=device)
+    main(train_path, test_path, device=DEVICE)

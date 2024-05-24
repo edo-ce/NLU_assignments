@@ -24,6 +24,7 @@ def main(
     out_int = len(lang.intent2id)
     vocab_len = len(lang.word2id)
     
+    # TODO: implement a single model that handle different choices
     # model = ModelIAS(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
     model = ModelIAS_Bidirectional(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
     model.apply(init_weights)
@@ -42,7 +43,7 @@ if __name__ == "__main__":
     # TODO: remove after debugging
     os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
     
-    train_path = os.path.join('datasets','ATIS','train.json')
-    test_path = os.path.join('datasets','ATIS','test.json')
+    train_path = os.path.join('..','..','datasets','ATIS','train.json')
+    test_path = os.path.join('..','..','datasets','ATIS','test.json')
 
     main(train_path, test_path, device=device)

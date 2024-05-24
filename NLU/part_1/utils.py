@@ -112,7 +112,6 @@ def split_test(tmp_train, portion=0.1):
     return X_train, X_dev
 
 def collate_fn(data):
-    print(data)
     def merge(sequences):
         '''
         merge from batch * sent_len to batch * max_len

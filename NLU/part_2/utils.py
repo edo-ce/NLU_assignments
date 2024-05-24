@@ -6,6 +6,9 @@ from collections import Counter
 from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer
 
+PAD_TOKEN = 0
+DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+
 # class to convert labels to ids and vice versa
 class Lang():
     def __init__(self, intents, slots):
@@ -36,18 +39,20 @@ class IntentsAndSlots(Dataset):
 
         self.tokenized_data = self.tokenize(self.utterances, self.slots)
         for i in range(len(self.intents)):
-            self.tokenized_data[i]["intents"] = self.intents[i]
-            # TODO: check if slot length is correct
-            # TODO: see if keep double tensor
-            self.tokenized_data[i]["slots_len"] = len(self.slots[i])
-
-        # print(self.tokenized_data[0])
+            self.tokenized_data[i]["intent"] = self.intents[i]
 
     def __len__(self):
         return len(self.utterances)
 
     def __getitem__(self, idx):
-        return self.tokenized_data[idx]
+        item = self.tokenized_data[idx]
+        return {
+            "input_ids": torch.tensor(item["input_ids"]),
+            "attention_mask": torch.tensor(item["attention_mask"]),
+            "token_type_ids": torch.tensor(item["token_type_ids"]),
+            "slots": torch.tensor(item["slots"]),
+            "intent": item["intent"]
+        }
 
     def get_label(self, label):
         return self.label_encoder.inverse_transform([label])
@@ -59,8 +64,6 @@ class IntentsAndSlots(Dataset):
             # slot = slot.split()
 
             tokenized_inputs = self.tokenizer(utt, truncation=True, is_split_into_words=True)
-            print(tokenized_inputs)
-            raise Exception("STOP HERE")
             # tokenized_inputs = self.tokenizer(utt, truncation=True, is_split_into_words=True, padding="max_length", max_length=512, return_tensors="pt")
 
             # padding and special tokens are None
@@ -76,7 +79,7 @@ class IntentsAndSlots(Dataset):
                     label_ids.append(-100)
                 previous_word_idx = word_idx
 
-            tokenized_inputs["slots"] = torch.tensor([label_ids])
+            tokenized_inputs["slots"] = label_ids
             res.append(tokenized_inputs)
         return res
 
@@ -129,20 +132,53 @@ def split_test(tmp_train, portion=0.1):
     return X_train, X_dev
 
 # function to use for the pytorch Dataloader collate_fn
-def collate_fn(batch):
-    new_batch = {}
-    keys = batch[0].keys()
+def collate_fn(data):
+    def merge(sequences):
+        '''
+        merge from batch * sent_len to batch * max_len
+        '''
+        lengths = [len(seq) for seq in sequences]
+        max_len = 1 if max(lengths)==0 else max(lengths)
+        # Pad token is zero in our case
+        # So we create a matrix full of PAD_TOKEN (i.e. 0) with the shape
+        # batch_size X maximum length of a sequence
+        padded_seqs = torch.LongTensor(len(sequences),max_len).fill_(PAD_TOKEN)
+        for i, seq in enumerate(sequences):
+            end = lengths[i]
+            padded_seqs[i, :end] = seq # We copy each sequence into the matrix
+        # print(padded_seqs)
+        padded_seqs = padded_seqs.detach()  # We remove these tensors from the computational graph
+        return padded_seqs, lengths
+    # Sort data by seq lengths
+    data.sort(key=lambda x: len(x['input_ids']), reverse=True)
+    new_item = {}
+    for key in data[0].keys():
+        new_item[key] = [d[key] for d in data]
 
-    for key in keys:
-        new_batch[key] = torch.tensor([d[key] for d in batch])
+    # We just need one length for packed pad seq, since len(utt) == len(slots)
+    src_utt, _ = merge(new_item['input_ids'])
+    src_mask, _ = merge(new_item['attention_mask'])
+    src_token_ids, _ = merge(new_item['token_type_ids'])
+    y_slots, y_lengths = merge(new_item["slots"])
+    intent = torch.LongTensor(new_item["intent"])
 
-    print(new_batch)
+    src_utt = src_utt.to(DEVICE) # We load the Tensor on our selected device
+    src_mask = src_mask.to(DEVICE)
+    src_token_ids = src_token_ids.to(DEVICE)
+    y_slots = y_slots.to(DEVICE)
+    intent = intent.to(DEVICE)
+    y_lengths = torch.LongTensor(y_lengths).to(DEVICE)
 
-    for key in keys:
-        if key != "slots_len":
-            new_batch[key] = new_batch[key].to(device)
+    new_item["utterance"] = new_item["input_ids"]
+    # 2-dimensional vector (examples x max_number of tokens in the batch)
+    new_item["input_ids"] = src_utt
+    new_item["attention_mask"] = src_mask
+    new_item["token_type_ids"] = src_token_ids
+    new_item["intents"] = intent
+    new_item["y_slots"] = y_slots
+    new_item["slots_len"] = y_lengths
 
-    return new_batch
+    return new_item
 
 
 def get_data(train_path, test_path):
