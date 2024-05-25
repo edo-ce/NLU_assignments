@@ -71,6 +71,8 @@ class IntentsAndSlots(Dataset):
         for i in range(len(self.intents)):
             self.tokenized_data[i]["intent"] = self.intents[i]
 
+        print(self.tokenized_data[0], '\n')
+
     def __len__(self):
         return len(self.utterances)
 
