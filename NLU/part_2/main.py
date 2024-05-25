@@ -17,6 +17,7 @@ def main(
     data = get_data(train_path, test_path)
     lang = data["lang"]
 
+    
     num_intents = len(lang.intent2id)
     num_slots = len(lang.slot2id)
 

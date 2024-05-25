@@ -12,11 +12,10 @@ def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=
     model.train()
     loss_array = []
     for sample in data:
-        print(sample)
         optimizer.zero_grad() # Zeroing the gradient
         slots, intent = model(sample['input_ids'], sample['attention_mask'], sample['token_type_ids'])
         loss_intent = criterion_intents(intent, sample['intents'])
-        loss_slot = criterion_slots(slots, sample['slots'])
+        loss_slot = criterion_slots(slots, sample['y_slots'])
         loss = loss_intent + loss_slot # In joint training we sum the losses.
                                        # Is there another way to do that?
         loss_array.append(loss.item()) # extract loss value as python float
@@ -41,7 +40,7 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
             print(len(sample))
             slots, intents = model(sample['input_ids'], sample['attention_mask'], sample['token_type_ids'])
             loss_intent = criterion_intents(intents, sample['intents'])
-            loss_slot = criterion_slots(slots, sample['slots'])
+            loss_slot = criterion_slots(slots, sample['y_slots'])
             loss = loss_intent + loss_slot
             loss_array.append(loss.item())
             # Intent inference
@@ -55,14 +54,12 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
             # Slot inference
             output_slots = torch.argmax(slots, dim=1)
             for id_seq, seq in enumerate(output_slots):
-                print()
-                print(seq)
-                length = sample['slots_len']
-                print(sample)
-                utt_ids = sample['utterance'][id_seq][:length].tolist()
-                gt_ids = sample['slots'][id_seq].tolist()
+                length = sample['slots_len'].tolist()[id_seq]
+                utt_ids = sample['utterance'][id_seq][:length]
+                gt_ids = sample['y_slots'][id_seq].tolist()
                 gt_slots = [lang.id2slot[elem] for elem in gt_ids[:length]]
-                utterance = [lang.id2word[elem] for elem in utt_ids]
+                # TODO: check if it works properly
+                utterance = lang.untokenize(utt_ids).split()
                 to_decode = seq[:length].tolist()
                 ref_slots.append([(utterance[id_el], elem) for id_el, elem in enumerate(gt_slots)])
                 tmp_seq = []

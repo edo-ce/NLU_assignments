@@ -17,46 +17,14 @@ class Lang():
         self.id2slot = {v:k for k, v in self.slot2id.items()}
         self.id2intent = {v:k for k, v in self.intent2id.items()}
 
+        self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
+
     def lab2id(self, elements):
         vocab = {}
         for elem in elements:
                 vocab[elem] = len(vocab)
         return vocab
-
-# class to define a custom pytorch Dataset
-class IntentsAndSlots(Dataset):
-    def __init__(self, dataset, lang):
-        self.utterances = []
-        self.intents = []
-        self.slots = []
-        self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
-
-        for x in dataset:
-            self.utterances.append(x['utterance'])
-            slots = [lang.slot2id[slot] for slot in x['slots'].split()]
-            self.slots.append(slots)
-            self.intents.append(lang.intent2id[x['intent']])
-
-        self.tokenized_data = self.tokenize(self.utterances, self.slots)
-        for i in range(len(self.intents)):
-            self.tokenized_data[i]["intent"] = self.intents[i]
-
-    def __len__(self):
-        return len(self.utterances)
-
-    def __getitem__(self, idx):
-        item = self.tokenized_data[idx]
-        return {
-            "input_ids": torch.tensor(item["input_ids"]),
-            "attention_mask": torch.tensor(item["attention_mask"]),
-            "token_type_ids": torch.tensor(item["token_type_ids"]),
-            "slots": torch.tensor(item["slots"]),
-            "intent": item["intent"]
-        }
-
-    def get_label(self, label):
-        return self.label_encoder.inverse_transform([label])
-
+    
     def tokenize(self, utterances, slots):
         res = []
         for utt, slot in zip(utterances, slots):
@@ -82,6 +50,39 @@ class IntentsAndSlots(Dataset):
             tokenized_inputs["slots"] = label_ids
             res.append(tokenized_inputs)
         return res
+    
+    def untokenize(self, token_ids):
+        return self.tokenizer.decode(token_ids, skip_special_tokens=True)
+
+# class to define a custom pytorch Dataset
+class IntentsAndSlots(Dataset):
+    def __init__(self, dataset, lang):
+        self.utterances = []
+        self.intents = []
+        self.slots = []
+
+        for x in dataset:
+            self.utterances.append(x['utterance'])
+            slots = [lang.slot2id[slot] for slot in x['slots'].split()]
+            self.slots.append(slots)
+            self.intents.append(lang.intent2id[x['intent']])
+
+        self.tokenized_data = lang.tokenize(self.utterances, self.slots)
+        for i in range(len(self.intents)):
+            self.tokenized_data[i]["intent"] = self.intents[i]
+
+    def __len__(self):
+        return len(self.utterances)
+
+    def __getitem__(self, idx):
+        item = self.tokenized_data[idx]
+        return {
+            "input_ids": torch.tensor(item["input_ids"]),
+            "attention_mask": torch.tensor(item["attention_mask"]),
+            "token_type_ids": torch.tensor(item["token_type_ids"]),
+            "slots": torch.tensor(item["slots"]),
+            "intent": item["intent"]
+        }
 
 # function to load data
 def load_data(path):
