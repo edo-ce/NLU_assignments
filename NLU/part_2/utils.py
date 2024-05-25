@@ -71,8 +71,6 @@ class IntentsAndSlots(Dataset):
         for i in range(len(self.intents)):
             self.tokenized_data[i]["intent"] = self.intents[i]
 
-        print(self.tokenized_data[0], '\n')
-
     def __len__(self):
         return len(self.utterances)
 
@@ -136,7 +134,7 @@ def split_test(tmp_train, portion=0.1):
 
 # function to use for the pytorch Dataloader collate_fn
 def collate_fn(data):
-    def merge(sequences):
+    def merge(sequences, pad_token=PAD_TOKEN):
         '''
         merge from batch * sent_len to batch * max_len
         '''
@@ -145,7 +143,7 @@ def collate_fn(data):
         # Pad token is zero in our case
         # So we create a matrix full of PAD_TOKEN (i.e. 0) with the shape
         # batch_size X maximum length of a sequence
-        padded_seqs = torch.LongTensor(len(sequences),max_len).fill_(PAD_TOKEN)
+        padded_seqs = torch.LongTensor(len(sequences),max_len).fill_(pad_token)
         for i, seq in enumerate(sequences):
             end = lengths[i]
             padded_seqs[i, :end] = seq # We copy each sequence into the matrix
@@ -162,7 +160,8 @@ def collate_fn(data):
     src_utt, _ = merge(new_item['input_ids'])
     src_mask, _ = merge(new_item['attention_mask'])
     src_token_ids, _ = merge(new_item['token_type_ids'])
-    y_slots, y_lengths = merge(new_item["slots"])
+    # TODO: check if it works correctly
+    y_slots, y_lengths = merge(new_item["slots"], pad_token=-100)
     intent = torch.LongTensor(new_item["intent"])
 
     src_utt = src_utt.to(DEVICE) # We load the Tensor on our selected device

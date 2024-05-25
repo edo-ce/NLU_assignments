@@ -17,7 +17,6 @@ def main(
     data = get_data(train_path, test_path)
     lang = data["lang"]
 
-    
     num_intents = len(lang.intent2id)
     num_slots = len(lang.slot2id)
 
@@ -26,7 +25,8 @@ def main(
 
     optimizer = optim.Adam(model.parameters(), lr=lr)
 
-    criterion_slots = nn.CrossEntropyLoss(ignore_index=-100)
+    pad_index = -100
+    criterion_slots = nn.CrossEntropyLoss(ignore_index=pad_index)
     criterion_intents = nn.CrossEntropyLoss() # Because we do not have the pad token
 
     train(data, model, optimizer, criterion_slots, criterion_intents, clip=clip)
