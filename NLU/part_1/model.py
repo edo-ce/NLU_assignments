@@ -52,21 +52,22 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 class ModelIAS_Bidirectional(nn.Module):
 
-    def __init__(self, hid_size, out_slot, out_int, emb_size, vocab_len, n_layer=1, pad_index=0, dropout=0.1):
+    def __init__(self, hid_size, out_slot, out_int, emb_size, vocab_len, n_layer=1, pad_index=0, is_dropout=True, dropout=0.1):
         super(ModelIAS_Bidirectional, self).__init__()
         self.embedding = nn.Embedding(vocab_len, emb_size, padding_idx=pad_index)
         self.utt_encoder = nn.LSTM(emb_size, hid_size, n_layer, bidirectional=True, batch_first=True)
         # The hidden size is doubled to accommodate the hidden states from both directions
         self.slot_out = nn.Linear(hid_size * 2, out_slot)
         self.intent_out = nn.Linear(hid_size * 2, out_int)
-        self.dropout = nn.Dropout(dropout)
+        self.dropout = nn.Dropout(dropout) if is_dropout else None
 
     def forward(self, utterance, seq_lengths):
         # utterance.size() = batch_size X seq_len
         utt_emb = self.embedding(utterance) # utt_emb.size() = batch_size X seq_len X emb_size
 
         # apply dropout to input embedding
-        utt_emb = self.dropout(utt_emb)
+        if self.dropout:
+            utt_emb = self.dropout(utt_emb)
 
         # pack_padded_sequence avoid computation over pad tokens reducing the computational cost
 
@@ -78,7 +79,8 @@ class ModelIAS_Bidirectional(nn.Module):
         utt_encoded, input_sizes = pad_packed_sequence(packed_output, batch_first=True)
 
         # apply dropout to LSTM hidden layer
-        utt_encoded = self.dropout(utt_encoded)
+        if self.dropout:
+            utt_encoded = self.dropout(utt_encoded)
 
         # Concatenate the hidden states from both directions
         last_hidden = torch.cat((last_hidden[0, :, :], last_hidden[1, :, :]), dim=1)
