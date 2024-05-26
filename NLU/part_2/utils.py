@@ -1,4 +1,5 @@
 import json
+import re
 import torch
 from sklearn.model_selection import train_test_split
 from pprint import pprint
@@ -51,8 +52,12 @@ class Lang():
             res.append(tokenized_inputs)
         return res
     
+    # function to come back to words given the token ids
     def untokenize(self, token_ids):
-        return self.tokenizer.decode(token_ids, skip_special_tokens=True)
+        # inverse process of the tokenizer
+        decoded = self.tokenizer.decode(token_ids, skip_special_tokens=True)
+        # split in 2 every word like i'd for every possible letters
+        return re.sub(r"([a-zA-Z])(')([a-zA-Z])", r"\1 \2\3", decoded)
 
 # class to define a custom pytorch Dataset
 class IntentsAndSlots(Dataset):

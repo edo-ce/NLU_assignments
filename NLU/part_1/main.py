@@ -37,8 +37,7 @@ def main(
     train(data, model, optimizer, criterion_slots, criterion_intents, clip=clip)
 
 if __name__ == "__main__":
-    device = 'cuda:0' if torch.cuda.is_available() else 'cpu'
-    print(f"Using {device} device")
+    print(f"Using {DEVICE} device")
 
     # TODO: remove after debugging
     os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
@@ -46,4 +45,4 @@ if __name__ == "__main__":
     train_path = os.path.join('..','..','datasets','ATIS','train.json')
     test_path = os.path.join('..','..','datasets','ATIS','test.json')
 
-    main(train_path, test_path, device=device)
+    main(train_path, test_path, device=DEVICE)

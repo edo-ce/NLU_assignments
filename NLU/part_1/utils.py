@@ -6,6 +6,7 @@ from pprint import pprint
 from collections import Counter
 from torch.utils.data import Dataset, DataLoader
 
+DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 PAD_TOKEN = 0
 
 class Lang():
@@ -139,10 +140,10 @@ def collate_fn(data):
     y_slots, y_lengths = merge(new_item["slots"])
     intent = torch.LongTensor(new_item["intent"])
 
-    src_utt = src_utt.to(device) # We load the Tensor on our selected device
-    y_slots = y_slots.to(device)
-    intent = intent.to(device)
-    y_lengths = torch.LongTensor(y_lengths).to(device)
+    src_utt = src_utt.to(DEVICE) # We load the Tensor on our selected device
+    y_slots = y_slots.to(DEVICE)
+    intent = intent.to(DEVICE)
+    y_lengths = torch.LongTensor(y_lengths).to(DEVICE)
 
     new_item["utterances"] = src_utt # 2-dimensional vector (examples x max_number of tokens in the batch)
     new_item["intents"] = intent

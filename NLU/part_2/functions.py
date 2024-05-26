@@ -37,7 +37,6 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
     #softmax = nn.Softmax(dim=1) # Use Softmax if you need the actual probability
     with torch.no_grad(): # It used to avoid the creation of computational graph
         for sample in data:
-            print(len(sample))
             slots, intents = model(sample['input_ids'], sample['attention_mask'], sample['token_type_ids'])
             loss_intent = criterion_intents(intents, sample['intents'])
             loss_slot = criterion_slots(slots, sample['y_slots'])
@@ -57,11 +56,21 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
                 length = sample['slots_len'].tolist()[id_seq]
                 utt_ids = sample['utterance'][id_seq][:length]
                 gt_ids = sample['y_slots'][id_seq].tolist()
-                gt_slots = [lang.id2slot[elem] for elem in gt_ids[:length]]
-                # TODO: check if it works properly
+                
+                # gt_slots = [lang.id2slot[elem] for elem in gt_ids[:length]]
+                gt_slots = []
+                to_decode = []
+                seq = seq.tolist()
+                # skip all the special tokens and the padding tokens
+                for id_el, elem in enumerate(gt_ids):
+                    if elem != -100:
+                        gt_slots.append(lang.id2slot[elem])
+                        to_decode.append(seq[id_el])
+
                 utterance = lang.untokenize(utt_ids).split()
-                to_decode = seq[:length].tolist()
+                # to_decode = seq[:length].tolist()
                 ref_slots.append([(utterance[id_el], elem) for id_el, elem in enumerate(gt_slots)])
+                
                 tmp_seq = []
                 for id_el, elem in enumerate(to_decode):
                     tmp_seq.append((utterance[id_el], lang.id2slot[elem]))

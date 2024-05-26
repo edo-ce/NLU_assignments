@@ -18,7 +18,9 @@ def main(
     lang = data["lang"]
 
     num_intents = len(lang.intent2id)
+    print("NUMBER OF INTENTS: ", num_intents)
     num_slots = len(lang.slot2id)
+    print("NUMBER OF SLOTS: ", num_slots, '\n')
 
     model_name = "bert-base-uncased"
     model = BertIAS(model_name, num_intents, num_slots).to(device)
