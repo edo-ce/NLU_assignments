@@ -23,9 +23,7 @@ def main(
     model.apply(init_weights)
 
     # optimizer = optim.SGD(model.parameters(), lr=lr)
-    # optimizer = optim.AdamW(model.parameters(), lr=lr)
-    # Non-monotonically Triggered ASGD
-    optimizer = optim.ASGD(model.parameters(), lr=lr, t0=0, lambd=0., weight_decay=1e-6)
+    optimizer = optim.AdamW(model.parameters(), lr=lr)
 
     criterion_train = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"])
     criterion_eval = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"], reduction='sum')

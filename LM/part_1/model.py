@@ -19,7 +19,7 @@ class LM_RNN(nn.Module):
         return output
     
 class LM_LSTM(nn.Module):
-    def __init__(self, emb_size, hidden_size, output_size, pad_index=0, out_dropout=0.1,
+    def __init__(self, emb_size, hidden_size, output_size, pad_index=0, is_dropout=True, out_dropout=0.1,
                  emb_dropout=0.1, n_layers=1):
         super(LM_LSTM, self).__init__()
         # Token ids to vectors, we will better see this in the next lab
@@ -32,13 +32,16 @@ class LM_LSTM(nn.Module):
         self.pad_token = pad_index
         # Linear layer to project the hidden layer to our output space
         self.output = nn.Linear(hidden_size, output_size)
+        self.is_dropout = is_dropout
 
     def forward(self, input_sequence):
         emb = self.embedding(input_sequence)
         # after embedding dropout
-        emb = self.embedding_dropout(emb)
+        if self.is_dropout:
+            emb = self.embedding_dropout(emb)
         lstm_out, _  = self.lstm(emb)
         # before output dropout
-        lstm_out = self.output_dropout(lstm_out)
+        if self.is_dropout:
+            lstm_out = self.output_dropout(lstm_out)
         output = self.output(lstm_out).permute(0,2,1)
         return output

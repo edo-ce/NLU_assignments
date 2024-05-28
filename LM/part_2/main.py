@@ -13,7 +13,7 @@ def main(
         test_path,
         hid_size = 300, # 200 original
         emb_size = 300,
-        lr=0.0001, # 1.5
+        lr=1.5, # 0.0001
         clip=5,
         device='cuda:0'
 ):
@@ -25,10 +25,8 @@ def main(
     model = LM_LSTM_REGULARIZED(emb_size, hid_size, vocab_len, pad_index=lang.word2id["<pad>"]).to(DEVICE)
     model.apply(init_weights)
 
-    # optimizer = optim.SGD(model.parameters(), lr=lr)
+    optimizer = optim.SGD(model.parameters(), lr=lr)
     # optimizer = optim.AdamW(model.parameters(), lr=lr)
-    # Non-monotonically Triggered ASGD
-    optimizer = optim.ASGD(model.parameters(), lr=lr, t0=0, lambd=0., weight_decay=1e-6)
 
     criterion_train = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"])
     criterion_eval = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"], reduction='sum')

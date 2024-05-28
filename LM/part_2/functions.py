@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.optim as optim
 import math
 import numpy as np
 import os
@@ -63,9 +64,11 @@ def init_weights(mat):
                 if m.bias != None:
                     m.bias.data.fill_(0.01)
 
-def train(data, model, optimizer, criterion_train, criterion_eval, clip=5, n_epochs=100, patience=3):
+def train(data, model, optimizer, criterion_train, criterion_eval, clip=5, n_epochs=100, patience=3, num_trials=5):
     losses_train = []
     losses_dev = []
+    # save logs for non-monotonically triggered AvSGD
+    dev_perplexities = []
     sampled_epochs = []
     best_ppl = math.inf
     best_model = None
@@ -77,17 +80,25 @@ def train(data, model, optimizer, criterion_train, criterion_eval, clip=5, n_epo
             sampled_epochs.append(epoch)
             losses_train.append(np.asarray(loss).mean())
             ppl_dev, loss_dev = eval_loop(data["dev"], criterion_eval, model)
+            
+            # Non-monotonically Triggered AvSGD
+            if isinstance(optimizer, optim.SGD) and 't0' not in optimizer.param_groups[0] and len(dev_perplexities) > num_trials and ppl_dev > min(dev_perplexities[:-num_trials]):
+                print("change to AvSGD")
+                optimizer = optim.ASGD(model.parameters(), lr=optimizer.param_groups[0]['lr'], t0=0, lambd=0., weight_decay=1e-6)
+            dev_perplexities.append(ppl_dev)
+
             losses_dev.append(np.asarray(loss_dev).mean())
             pbar.set_description("PPL: %f" % ppl_dev)
             if  ppl_dev < best_ppl: # the lower, the better
                 best_ppl = ppl_dev
                 best_model = copy.deepcopy(model).to('cpu')
                 patience = 3
-            else:
+            # decrease the patience after that AvSGD is activated
+            elif isinstance(optimizer, optim.ASGD):
                 patience -= 1
-
+ 
             if patience <= 0: # Early stopping with patience
-                break # Not nice but it keeps the code clean
+                break
 
     best_model.to(DEVICE)
     final_ppl,  _ = eval_loop(data["test"], criterion_eval, best_model)
