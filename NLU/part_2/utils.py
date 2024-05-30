@@ -165,7 +165,6 @@ def collate_fn(data):
     src_utt, _ = merge(new_item['input_ids'])
     src_mask, _ = merge(new_item['attention_mask'])
     src_token_ids, _ = merge(new_item['token_type_ids'])
-    # TODO: check if it works correctly
     y_slots, y_lengths = merge(new_item["slots"], pad_token=-100)
     intent = torch.LongTensor(new_item["intent"])
 
