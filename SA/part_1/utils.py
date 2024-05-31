@@ -1,4 +1,3 @@
-import json
 import re
 import random
 import torch
@@ -89,7 +88,10 @@ def read_file(path):
     with open(path, "r", encoding="utf8") as f:
         for line in f.readlines():
             line = line.strip().split("####")
-            sentence = line[0].strip()
+            sentence = process_text(line[0]).split()
+            if len(sentence) != len(line[1].split()):
+                print(line[0])
+                print(sentence)
             tags = line[1].split()
             words = [word.split('=')[0] for word in tags]
             aspects = [aspect.split('=')[1] for aspect in tags]
