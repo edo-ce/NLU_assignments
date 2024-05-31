@@ -1,6 +1,7 @@
 from transformers import BertModel
 import torch.nn as nn
 
+# module to fine-tune BERT for Intent and Slot classification
 class BertIAS(nn.Module):
     def __init__(self, model_name, num_intents, num_slots):
         super(BertIAS, self).__init__()
