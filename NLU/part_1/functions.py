@@ -31,17 +31,18 @@ def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=
     model.train()
     loss_array = []
     for sample in data:
-        optimizer.zero_grad() # Zeroing the gradient
+        # zeroing the gradient
+        optimizer.zero_grad()
         slots, intent = model(sample['utterances'], sample['slots_len'])
         loss_intent = criterion_intents(intent, sample['intents'])
         loss_slot = criterion_slots(slots, sample['y_slots'])
-        loss = loss_intent + loss_slot # In joint training we sum the losses.
-                                       # Is there another way to do that?
-        loss_array.append(loss.item()) # extract loss value as python float
-        loss.backward() # Compute the gradient, deleting the computational graph
+        loss = loss_intent + loss_slot
+        loss_array.append(loss.item())
+        loss.backward()
         # clip the gradient to avoid exploding gradients
         torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
-        optimizer.step() # Update the weights
+        # update the weights
+        optimizer.step()
     return loss_array
 
 def eval_loop(data, criterion_slots, criterion_intents, model, lang):
@@ -53,8 +54,9 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
 
     ref_slots = []
     hyp_slots = []
-    #softmax = nn.Softmax(dim=1) # Use Softmax if you need the actual probability
-    with torch.no_grad(): # It used to avoid the creation of computational graph
+    
+    # avoid the creation of computational graph
+    with torch.no_grad():
         for sample in data:
             slots, intents = model(sample['utterances'], sample['slots_len'])
             loss_intent = criterion_intents(intents, sample['intents'])
@@ -126,7 +128,7 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
             losses_dev.append(np.asarray(loss_dev).mean())
 
             f1 = results_dev['total']['f']
-            # For decreasing the patience you can also use the average between slot f1 and intent accuracy
+            
             if f1 > best_f1:
                 best_f1 = f1
                 # Here you should save the model
@@ -134,7 +136,7 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
             else:
                 patience -= 1
             if patience <= 0: # Early stopping with patience
-                break # Not nice but it keeps the code clean
+                break
 
     results_test, intent_test, _ = eval_loop(data["test"], criterion_slots,
                                             criterion_intents, model, lang)

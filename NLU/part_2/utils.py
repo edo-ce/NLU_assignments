@@ -18,31 +18,34 @@ class Lang():
         self.id2slot = {v:k for k, v in self.slot2id.items()}
         self.id2intent = {v:k for k, v in self.intent2id.items()}
 
+        # upload the bert tokenizer from Hugging Face
         self.tokenizer = AutoTokenizer.from_pretrained("bert-base-uncased")
 
+    # convert from labels to ids
     def lab2id(self, elements):
         vocab = {}
         for elem in elements:
                 vocab[elem] = len(vocab)
         return vocab
     
+    # function to tokenize the utterances and slots
     def tokenize(self, utterances, slots):
         res = []
         for utt, slot in zip(utterances, slots):
             utt = utt.split()
-            # slot = slot.split()
 
             tokenized_inputs = self.tokenizer(utt, truncation=True, is_split_into_words=True)
-            # tokenized_inputs = self.tokenizer(utt, truncation=True, is_split_into_words=True, padding="max_length", max_length=512, return_tensors="pt")
 
             # padding and special tokens are None
             word_ids = tokenized_inputs.word_ids(batch_index=0)
             previous_word_idx = None
             label_ids = []
-            for word_idx in word_ids:  # Set padding and special tokens to -100.
+            # set padding and special tokens to -100.
+            for word_idx in word_ids:
                 if word_idx is None:
                     label_ids.append(-100)
-                elif word_idx != previous_word_idx:  # Only label the first token of a given word.
+                elif word_idx != previous_word_idx:
+                    # only label the first token of a given word.
                     label_ids.append(slot[word_idx])
                 else:
                     label_ids.append(-100)
@@ -68,10 +71,13 @@ class IntentsAndSlots(Dataset):
 
         for x in dataset:
             self.utterances.append(x['utterance'])
+            # convert the slots to ids
             slots = [lang.slot2id[slot] for slot in x['slots'].split()]
             self.slots.append(slots)
+            # convert the intents to ids
             self.intents.append(lang.intent2id[x['intent']])
 
+        # tokenize the data using the BERT tokenizer
         self.tokenized_data = lang.tokenize(self.utterances, self.slots)
         for i in range(len(self.intents)):
             self.tokenized_data[i]["intent"] = self.intents[i]
@@ -100,12 +106,14 @@ def load_data(path):
         dataset = json.loads(f.read())
     return dataset
 
+# function to retrieve all the intents
 def get_intents(train, test):
     intents = set()
     for data in (train + test):
         intents.add(data["intent"])
     return intents
 
+# function to retrieve all the slots
 def get_slots(train, test):
     slots = set()
     for data in (train + test):
@@ -145,30 +153,32 @@ def collate_fn(data):
         '''
         lengths = [len(seq) for seq in sequences]
         max_len = 1 if max(lengths)==0 else max(lengths)
-        # Pad token is zero in our case
-        # So we create a matrix full of PAD_TOKEN (i.e. 0) with the shape
-        # batch_size X maximum length of a sequence
+        
+        # create a matrix full pad_token with the shape batch_size X max_len
         padded_seqs = torch.LongTensor(len(sequences),max_len).fill_(pad_token)
         for i, seq in enumerate(sequences):
             end = lengths[i]
-            padded_seqs[i, :end] = seq # We copy each sequence into the matrix
-        # print(padded_seqs)
-        padded_seqs = padded_seqs.detach()  # We remove these tensors from the computational graph
+            # copy each sequence into the matrix
+            padded_seqs[i, :end] = seq
+        
+        # remove these tensors from the computational graph
+        padded_seqs = padded_seqs.detach()
         return padded_seqs, lengths
-    # Sort data by seq lengths
+    # sort data by seq lengths
     data.sort(key=lambda x: len(x['input_ids']), reverse=True)
     new_item = {}
     for key in data[0].keys():
         new_item[key] = [d[key] for d in data]
 
-    # We just need one length for packed pad seq, since len(utt) == len(slots)
+    # just need one length for packed pad seq, since len(utt) == len(slots)
     src_utt, _ = merge(new_item['input_ids'])
     src_mask, _ = merge(new_item['attention_mask'])
     src_token_ids, _ = merge(new_item['token_type_ids'])
     y_slots, y_lengths = merge(new_item["slots"], pad_token=-100)
     intent = torch.LongTensor(new_item["intent"])
 
-    src_utt = src_utt.to(DEVICE) # We load the Tensor on our selected device
+    # load the Tensor on our selected device
+    src_utt = src_utt.to(DEVICE)
     src_mask = src_mask.to(DEVICE)
     src_token_ids = src_token_ids.to(DEVICE)
     y_slots = y_slots.to(DEVICE)
@@ -186,7 +196,7 @@ def collate_fn(data):
 
     return new_item
 
-
+# function to get the dataloaders and the Lang object
 def get_data(train_path, test_path):
     tmp_train_raw = load_data(train_path)
     test_raw = load_data(test_path)

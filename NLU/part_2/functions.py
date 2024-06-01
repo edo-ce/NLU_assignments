@@ -8,23 +8,26 @@ from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+# function used to train the model
 def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=5):
     model.train()
     loss_array = []
     for sample in data:
-        optimizer.zero_grad() # Zeroing the gradient
+        # zeroing the gradients
+        optimizer.zero_grad()
         slots, intent = model(sample['input_ids'], sample['attention_mask'], sample['token_type_ids'])
         loss_intent = criterion_intents(intent, sample['intents'])
         loss_slot = criterion_slots(slots, sample['y_slots'])
-        loss = loss_intent + loss_slot # In joint training we sum the losses.
-                                       # Is there another way to do that?
-        loss_array.append(loss.item()) # extract loss value as python float
-        loss.backward() # Compute the gradient, deleting the computational graph
+        loss = loss_intent + loss_slot
+        loss_array.append(loss.item())
+        loss.backward()
         # clip the gradient to avoid exploding gradients
         torch.nn.utils.clip_grad_norm_(model.parameters(), clip)
-        optimizer.step() # Update the weights
+        # update the weights
+        optimizer.step()
     return loss_array
 
+# function used to test the model
 def eval_loop(data, criterion_slots, criterion_intents, model, lang):
     model.eval()
     loss_array = []
@@ -34,8 +37,9 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
 
     ref_slots = []
     hyp_slots = []
-    #softmax = nn.Softmax(dim=1) # Use Softmax if you need the actual probability
-    with torch.no_grad(): # It used to avoid the creation of computational graph
+    
+    # avoid the creation of computational graph
+    with torch.no_grad():
         for sample in data:
             slots, intents = model(sample['input_ids'], sample['attention_mask'], sample['token_type_ids'])
             loss_intent = criterion_intents(intents, sample['intents'])
@@ -57,7 +61,6 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
                 utt_ids = sample['utterance'][id_seq][:length]
                 gt_ids = sample['y_slots'][id_seq].tolist()
                 
-                # gt_slots = [lang.id2slot[elem] for elem in gt_ids[:length]]
                 gt_slots = []
                 to_decode = []
                 seq = seq.tolist()
@@ -68,7 +71,6 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
                         to_decode.append(seq[id_el])
 
                 utterance = lang.untokenize(utt_ids).split()
-                # to_decode = seq[:length].tolist()
                 ref_slots.append([(utterance[id_el], elem) for id_el, elem in enumerate(gt_slots)])
                 
                 tmp_seq = []
@@ -118,7 +120,6 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
             losses_dev.append(np.asarray(loss_dev).mean())
 
             f1 = results_dev['total']['f']
-            # For decreasing the patience you can also use the average between slot f1 and intent accuracy
             if f1 > best_f1:
                 best_f1 = f1
                 # Here you should save the model
@@ -126,7 +127,7 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
             else:
                 patience -= 1
             if patience <= 0: # Early stopping with patience
-                break # Not nice but it keeps the code clean
+                break
 
     results_test, intent_test, _ = eval_loop(data["test"], criterion_slots,
                                             criterion_intents, model, lang)
