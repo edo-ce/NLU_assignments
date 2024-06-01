@@ -31,7 +31,6 @@ def eval_loop(data, eval_criterion, model):
     loss_to_return = []
     loss_array = []
     number_of_tokens = []
-    # softmax = nn.Softmax(dim=1) # Use Softmax if you need the actual probability
     with torch.no_grad(): # It used to avoid the creation of computational graph
         for sample in data:
             output = model(sample['source'])
@@ -70,7 +69,6 @@ def train(data, model, optimizer, criterion_train, criterion_eval, clip=5, n_epo
     best_ppl = math.inf
     best_model = None
     pbar = tqdm(range(1,n_epochs))
-    #If the PPL is too high try to change the learning rate
     for epoch in pbar:
         loss = train_loop(data["train"], optimizer, criterion_train, model, clip)
         if epoch % 1 == 0:
@@ -87,7 +85,7 @@ def train(data, model, optimizer, criterion_train, criterion_eval, clip=5, n_epo
                 patience -= 1
 
             if patience <= 0: # Early stopping with patience
-                break # Not nice but it keeps the code clean
+                break
 
     best_model.to(DEVICE)
     final_ppl,  _ = eval_loop(data["test"], criterion_eval, best_model)

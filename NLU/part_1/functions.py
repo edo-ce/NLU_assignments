@@ -27,6 +27,7 @@ def init_weights(mat):
                 if m.bias != None:
                     m.bias.data.fill_(0.01)
 
+# function used to train the model
 def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=5):
     model.train()
     loss_array = []
@@ -45,6 +46,7 @@ def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=
         optimizer.step()
     return loss_array
 
+# function used to evaluate the model
 def eval_loop(data, criterion_slots, criterion_intents, model, lang):
     model.eval()
     loss_array = []

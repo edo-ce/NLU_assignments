@@ -27,7 +27,7 @@ def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=
         optimizer.step()
     return loss_array
 
-# function used to test the model
+# function used to evaluate the model
 def eval_loop(data, criterion_slots, criterion_intents, model, lang):
     model.eval()
     loss_array = []
