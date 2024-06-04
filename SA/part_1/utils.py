@@ -55,12 +55,12 @@ class Lang():
     
 class AspectTerms(Dataset):
     def __init__(self, dataset, lang):
-        self.sentences = []
         self.words = []
         self.aspects = []
 
+        self.words = dataset["words"]
+        self.aspects = [lang.aspect2id[aspect] for aspect in dataset["aspects"]]
         for x in dataset:
-            self.sentences.append(x['sentence'])
             self.words.append(x['words'])
             aspects = [lang.aspect2id[aspect] for aspect in x['aspects']]
             self.aspects.append(aspects)
@@ -82,6 +82,27 @@ class AspectTerms(Dataset):
             "sentence": item["sentence"]
         }
 
+# function to retrieve data from the file
+def read_file(path):
+    dataset = []
+    words = []
+    aspects = []
+
+    with open(path, 'r') as file:
+        for line in file:
+            line = line.strip()
+            if line:
+                # split the line into word and tag
+                word, aspect = line.split()
+                words.append(word)
+                aspects.append(aspect.split('-')[0])
+            elif len(words) > 0:
+                dataset.append({"words": words, "aspects": aspects})
+                words = []
+                aspects = []
+    
+    return dataset
+
 # Loading the corpus
 def read_file(path):
     dataset = []
@@ -100,9 +121,9 @@ def read_file(path):
             dataset.append(data)
     return dataset
 
-def get_aspects(train, test):
+def get_aspects(train, dev, test):
     aspects = set()
-    for data in (train + test):
+    for data in (train + dev + test):
         for aspect in data["aspects"]:
             aspects.add(aspect)
     return aspects
@@ -164,20 +185,20 @@ def collate_fn(data):
 
     return new_item
 
-def get_data(train_path, test_path):
-    tmp_train_raw = read_file(train_path)
+def get_data(train_path, dev_path, test_path):
+    train_raw = read_file(train_path)
+    dev_raw = read_file(dev_path)
     test_raw = read_file(test_path)
 
-    print('Train samples:', len(tmp_train_raw))
+    print('Train samples:', len(train_raw))
+    print('Dev samples:', len(dev_raw))
     print('Test samples:', len(test_raw))
-    print(tmp_train_raw[0])
+    print(train_raw[0])
     print()
 
-    aspects = get_aspects(tmp_train_raw, test_raw)
+    aspects = get_aspects(train_raw, dev_raw, test_raw)
 
     lang = Lang(aspects)
-
-    train_raw, dev_raw = split_test(tmp_train_raw)
 
     print('Train data has been splitted')
     print('TRAIN size:', len(train_raw))

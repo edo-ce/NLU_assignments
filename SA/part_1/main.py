@@ -9,6 +9,7 @@ import os
 
 def main(
         train_path,
+        dev_path,
         test_path,
         hid_size = 300, # 200 original
         emb_size = 300,
@@ -16,7 +17,13 @@ def main(
         clip=5,
         device='cuda:0'
 ):
-    data = get_data(train_path, test_path)
+    data = get_data(train_path, dev_path, test_path)
+
+    # TODO: get the number of aspects
+    num_aspects = None
+
+    model_name = "bert-base-cased"
+    model = BertABSA(model_name, num_aspects)
 
 if __name__ == "__main__":
     print(f"Using {DEVICE} device")
@@ -25,6 +32,7 @@ if __name__ == "__main__":
     os.environ['CUDA_LAUNCH_BLOCKING'] = "1"
     
     train_path = os.path.join('..','..','datasets','SemEval_2014_Task_4','laptop14_train.txt')
+    dev_path = os.path.join('..','..','datasets','SemEval_2014_Task_4','laptop14_dev.txt')
     test_path = os.path.join('..','..','datasets','SemEval_2014_Task_4','laptop14_test.txt')
 
-    main(train_path, test_path, device=DEVICE)
+    main(train_path, dev_path, test_path, device=DEVICE)
