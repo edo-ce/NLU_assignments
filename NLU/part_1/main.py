@@ -26,7 +26,7 @@ def main(
     out_int = len(lang.intent2id)
     vocab_len = len(lang.word2id)
 
-    path = os.path.join(SAVING_PATH, model_type)
+    path = os.path.join(SAVING_PATH, model_type + ".pt")
 
     if model_type == "lstm_original":
         model = ModelIAS(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
@@ -46,10 +46,10 @@ def main(
         checkpoint = torch.load(path)
         model.load_state_dict(checkpoint['model'])
         lang = checkpoint["lang"]
-        print(lang)
+        test_data = checkpoint["test_data"]
         print("Loading the model\n")
         print("Evaluating...")
-        results_test, intent_test, _ = eval_loop(data["test"], criterion_slots, criterion_intents, model, lang)
+        results_test, intent_test, _ = eval_loop(test_data, criterion_slots, criterion_intents, model, lang)
         print('Slot F1: ', results_test['total']['f'])
         print('Intent Accuracy:', intent_test['accuracy'])
     else:
@@ -66,4 +66,4 @@ if __name__ == "__main__":
     train_path = os.path.join('..','..','datasets','ATIS','train.json')
     test_path = os.path.join('..','..','datasets','ATIS','test.json')
 
-    main(train_path, test_path, device=DEVICE, model_type="lstm_original", is_train=False)
+    main(train_path, test_path, device=DEVICE, model_type="bidirectional", is_train=False)

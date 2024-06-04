@@ -43,14 +43,11 @@ class ModelIAS(nn.Module):
         slots = slots.permute(0,2,1)
         # Slot size: batch_size, classes, seq_len
         return slots, intent
-    
-import torch.nn as nn
-from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 
 # model with bidirectionality and dropout
 class ModelIAS_Bidirectional(nn.Module):
 
-    def __init__(self, hid_size, out_slot, out_int, emb_size, vocab_len, model_name="bidirectional", n_layer=1, pad_index=0, is_dropout=True, dropout=0.1):
+    def __init__(self, hid_size, out_slot, out_int, emb_size, vocab_len, name="bidirectional", n_layer=1, pad_index=0, is_dropout=True, dropout=0.1):
         super(ModelIAS_Bidirectional, self).__init__()
         self.embedding = nn.Embedding(vocab_len, emb_size, padding_idx=pad_index)
         self.utt_encoder = nn.LSTM(emb_size, hid_size, n_layer, bidirectional=True, batch_first=True)
@@ -58,7 +55,7 @@ class ModelIAS_Bidirectional(nn.Module):
         self.slot_out = nn.Linear(hid_size * 2, out_slot)
         self.intent_out = nn.Linear(hid_size * 2, out_int)
         self.dropout = nn.Dropout(dropout) if is_dropout else None
-        self.model_name = model_name if not is_dropout else model_name + "_dropout"
+        self.name = name if not is_dropout else name + "_dropout"
 
     def forward(self, utterance, seq_lengths):
         # utterance.size() = batch_size X seq_len

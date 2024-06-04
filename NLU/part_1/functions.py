@@ -8,7 +8,7 @@ from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
-SAVING_PATH = os.path.join("..", "..", "bin", "NLU")
+SAVING_PATH = os.path.join("..", "..", "bin")
 
 def seed_everything(seed=1234):
     random.seed(seed)
@@ -19,7 +19,8 @@ def seed_everything(seed=1234):
     torch.backends.cudnn.deterministic = True
     print("Seed setted.")
     
-seed_everything()
+# seed_everything()
+torch.manual_seed(0)
 
 def init_weights(mat):
     for m in mat.modules():
@@ -162,10 +163,11 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
     # save the model in the bin folder
     saving_obj = {
         "model": model.state_dict(),
-        "lang": lang
+        "lang": lang,
+        "test_data": data["test"]
     }
 
-    path = os.path.join(SAVING_PATH, model.name)
+    path = os.path.join(SAVING_PATH, model.name + ".pt")
     torch.save(saving_obj, path)
 
     results_test, intent_test, _ = eval_loop(data["test"], criterion_slots,
@@ -173,4 +175,4 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
     print('Slot F1: ', results_test['total']['f'])
     print('Intent Accuracy:', intent_test['accuracy'])
 
-    plot_train_dev_loss(sampled_epochs, losses_train, losses_dev)
+    # plot_train_dev_loss(sampled_epochs, losses_train, losses_dev)
