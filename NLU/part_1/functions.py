@@ -7,6 +7,8 @@ from sklearn.metrics import classification_report
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 
+SAVING_PATH = os.path.join("..", "..", "bin", "NLU")
+
 def init_weights(mat):
     for m in mat.modules():
         if type(m) in [nn.GRU, nn.LSTM, nn.RNN]:
@@ -111,7 +113,13 @@ def plot_train_dev_loss(sampled_epochs, losses_train, losses_dev):
     plt.legend()
     plt.show()
 
-def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_epochs=200, patience=3):
+def save_model(model_name, obj):
+    path = os.path.join(SAVING_PATH, model_name)
+    # if os.path.exists(path):
+        # os.remove(path)
+    torch.save(obj, path)
+
+def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_epochs=200, patience=3, new_model=None):
     losses_train = []
     losses_dev = []
     sampled_epochs = []
@@ -133,21 +141,34 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
             
             if f1 > best_f1:
                 best_f1 = f1
-                # Here you should save the model
                 patience = 3
             else:
                 patience -= 1
             if patience <= 0: # Early stopping with patience
                 break
 
+    # save the model in the bin folder
+    saving_obj = {
+        "model": model.state_dict()
+    }
+
+    path = os.path.join(SAVING_PATH, model.name)
+    torch.save(saving_obj, path)
+
+    checkpoint = torch.load(path)
+    print(type(checkpoint["model"]))
+    print(type(saving_obj["model"]), '\n')
+
     results_test, intent_test, _ = eval_loop(data["test"], criterion_slots,
                                             criterion_intents, model, lang)
     print('Slot F1: ', results_test['total']['f'])
     print('Intent Accuracy:', intent_test['accuracy'])
 
-    plot_train_dev_loss(sampled_epochs, losses_train, losses_dev)
+    print()
+    new_model.load_state_dict(checkpoint['model'])
+    results_test2, intent_test2, _ = eval_loop(data["test"], criterion_slots,
+                                            criterion_intents, model, lang)
+    print('Slot F1: ', results_test2['total']['f'])
+    print('Intent Accuracy:', intent_test2['accuracy'])
 
-def save_model(model_name, obj):
-    PATH = os.path.join("bin", model_name)
-    saving_object = obj
-    torch.save(saving_object, PATH)
+    plot_train_dev_loss(sampled_epochs, losses_train, losses_dev)

@@ -170,7 +170,7 @@ def get_data(train_path, test_path):
 
     print('Train samples:', len(tmp_train_raw))
     print('Test samples:', len(test_raw))
-    pprint(tmp_train_raw[0])
+    # pprint(tmp_train_raw[0])
     print()
 
     train_raw, dev_raw = split_test(tmp_train_raw)

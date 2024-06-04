@@ -5,7 +5,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 # original model without bidirectionality and dropout
 class ModelIAS(nn.Module):
 
-    def __init__(self, hid_size, out_slot, out_int, emb_size, vocab_len, n_layer=1, pad_index=0):
+    def __init__(self, hid_size, out_slot, out_int, emb_size, vocab_len, n_layer=1, pad_index=0, name="lstm_original"):
         super(ModelIAS, self).__init__()
         # hid_size = Hidden size
         # out_slot = number of slots (output size for slot filling)
@@ -17,6 +17,7 @@ class ModelIAS(nn.Module):
         self.utt_encoder = nn.LSTM(emb_size, hid_size, n_layer, bidirectional=False, batch_first=True)
         self.slot_out = nn.Linear(hid_size, out_slot)
         self.intent_out = nn.Linear(hid_size, out_int)
+        self.name = name
 
     def forward(self, utterance, seq_lengths):
         # utterance.size() = batch_size X seq_len
@@ -49,7 +50,7 @@ from torch.nn.utils.rnn import pack_padded_sequence, pad_packed_sequence
 # model with bidirectionality and dropout
 class ModelIAS_Bidirectional(nn.Module):
 
-    def __init__(self, hid_size, out_slot, out_int, emb_size, vocab_len, n_layer=1, pad_index=0, is_dropout=True, dropout=0.1):
+    def __init__(self, hid_size, out_slot, out_int, emb_size, vocab_len, model_name="bidirectional", n_layer=1, pad_index=0, is_dropout=True, dropout=0.1):
         super(ModelIAS_Bidirectional, self).__init__()
         self.embedding = nn.Embedding(vocab_len, emb_size, padding_idx=pad_index)
         self.utt_encoder = nn.LSTM(emb_size, hid_size, n_layer, bidirectional=True, batch_first=True)
@@ -57,6 +58,7 @@ class ModelIAS_Bidirectional(nn.Module):
         self.slot_out = nn.Linear(hid_size * 2, out_slot)
         self.intent_out = nn.Linear(hid_size * 2, out_int)
         self.dropout = nn.Dropout(dropout) if is_dropout else None
+        self.model_name = model_name if not is_dropout else model_name + "_dropout"
 
     def forward(self, utterance, seq_lengths):
         # utterance.size() = batch_size X seq_len

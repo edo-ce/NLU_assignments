@@ -12,9 +12,11 @@ def main(
         test_path,
         hid_size = 200,
         emb_size = 300,
-        lr=0.0001,
+        lr=0.0001, # 0.0001
         clip=5,
-        device='cuda:0'
+        device='cuda:0',
+        model_type="bidirectional_dropout",
+        is_train=False
 ):
     
     data = get_data(train_path, test_path)
@@ -23,18 +25,36 @@ def main(
     out_slot = len(lang.slot2id)
     out_int = len(lang.intent2id)
     vocab_len = len(lang.word2id)
-    
-    # TODO: implement a single model that handle different choices
-    # model = ModelIAS(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
-    model = ModelIAS_Bidirectional(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
-    model.apply(init_weights)
+
+    path = os.path.join(SAVING_PATH, model_type)
+
+    if model_type == "lstm_original":
+        model = ModelIAS(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
+        print("Using the original LSTM model.\n")
+    elif model_type == "bidirectional":
+        model = ModelIAS_Bidirectional(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN, is_dropout=False).to(device)
+        print("Using the bidirectional LSTM model.\n")
+    else:
+        model = ModelIAS_Bidirectional(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
+        print("Using the bidirectional LSTM model with dropout.\n")
 
     optimizer = optim.Adam(model.parameters(), lr=lr)
-
     criterion_slots = nn.CrossEntropyLoss(ignore_index=PAD_TOKEN)
-    criterion_intents = nn.CrossEntropyLoss() # Because we do not have the pad token
+    criterion_intents = nn.CrossEntropyLoss()
 
-    train(data, model, optimizer, criterion_slots, criterion_intents, clip=clip)
+    if not is_train:
+        checkpoint = torch.load(path)
+        model.load_state_dict(checkpoint['model'])
+        print("Loading the model\n")
+        print("Evaluating...")
+        results_test, intent_test, _ = eval_loop(data["test"], criterion_slots, criterion_intents, model, data["lang"])
+        print('Slot F1: ', results_test['total']['f'])
+        print('Intent Accuracy:', intent_test['accuracy'])
+    else:
+        model.apply(init_weights)
+        print("Training...")
+        model2 = ModelIAS(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
+        train(data, model, optimizer, criterion_slots, criterion_intents, clip=clip, new_model=model2)
 
 if __name__ == "__main__":
     print(f"Using {DEVICE} device")
@@ -45,4 +65,4 @@ if __name__ == "__main__":
     train_path = os.path.join('..','..','datasets','ATIS','train.json')
     test_path = os.path.join('..','..','datasets','ATIS','test.json')
 
-    main(train_path, test_path, device=DEVICE)
+    main(train_path, test_path, device=DEVICE, model_type="lstm_original", is_train=False)
