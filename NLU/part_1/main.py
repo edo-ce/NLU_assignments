@@ -45,16 +45,17 @@ def main(
     if not is_train:
         checkpoint = torch.load(path)
         model.load_state_dict(checkpoint['model'])
+        lang = checkpoint["lang"]
+        print(lang)
         print("Loading the model\n")
         print("Evaluating...")
-        results_test, intent_test, _ = eval_loop(data["test"], criterion_slots, criterion_intents, model, data["lang"])
+        results_test, intent_test, _ = eval_loop(data["test"], criterion_slots, criterion_intents, model, lang)
         print('Slot F1: ', results_test['total']['f'])
         print('Intent Accuracy:', intent_test['accuracy'])
     else:
         model.apply(init_weights)
         print("Training...")
-        model2 = ModelIAS(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
-        train(data, model, optimizer, criterion_slots, criterion_intents, clip=clip, new_model=model2)
+        train(data, model, optimizer, criterion_slots, criterion_intents, clip=clip)
 
 if __name__ == "__main__":
     print(f"Using {DEVICE} device")
