@@ -5,7 +5,6 @@ import random
 import os
 from conll import evaluate
 from sklearn.metrics import classification_report
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 SAVING_PATH = os.path.join("..", "..", "bin")
@@ -19,9 +18,9 @@ def seed_everything(seed=1234):
     torch.backends.cudnn.deterministic = True
     print("Seed setted.")
     
-# seed_everything()
-torch.manual_seed(0)
+seed_everything()
 
+# function to initialize the weights of a model
 def init_weights(mat):
     for m in mat.modules():
         if type(m) in [nn.GRU, nn.LSTM, nn.RNN]:
@@ -116,16 +115,6 @@ def eval_loop(data, criterion_slots, criterion_intents, model, lang):
                                           zero_division=False, output_dict=True)
     return results, report_intent, loss_array
 
-def plot_train_dev_loss(sampled_epochs, losses_train, losses_dev):
-    plt.figure(num = 3, figsize=(8, 5)).patch.set_facecolor('white')
-    plt.title('Train and Dev Losses')
-    plt.ylabel('Loss')
-    plt.xlabel('Epochs')
-    plt.plot(sampled_epochs, losses_train, label='Train loss')
-    plt.plot(sampled_epochs, losses_dev, label='Dev loss')
-    plt.legend()
-    plt.show()
-
 def save_model(model_name, obj):
     path = os.path.join(SAVING_PATH, model_name)
     # if os.path.exists(path):
@@ -160,13 +149,14 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
             if patience <= 0: # Early stopping with patience
                 break
 
-    # save the model in the bin folder
+    # select what to save
     saving_obj = {
         "model": model.state_dict(),
         "lang": lang,
         "test_data": data["test"]
     }
 
+    # save the model in the bin folder
     path = os.path.join(SAVING_PATH, model.name + ".pt")
     torch.save(saving_obj, path)
 
@@ -174,5 +164,3 @@ def train(data, model, optimizer, criterion_slots, criterion_intents, clip=5, n_
                                             criterion_intents, model, lang)
     print('Slot F1: ', results_test['total']['f'])
     print('Intent Accuracy:', intent_test['accuracy'])
-
-    # plot_train_dev_loss(sampled_epochs, losses_train, losses_dev)

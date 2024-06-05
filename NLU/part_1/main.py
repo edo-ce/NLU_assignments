@@ -19,6 +19,7 @@ def main(
         is_train=False
 ):
     
+    # retrieve all the data
     data = get_data(train_path, test_path)
     lang = data["lang"]
 
@@ -28,6 +29,7 @@ def main(
 
     path = os.path.join(SAVING_PATH, model_type + ".pt")
 
+    # initialize the selected model
     if model_type == "lstm_original":
         model = ModelIAS(hid_size, out_slot, out_int, emb_size, vocab_len, pad_index=PAD_TOKEN).to(device)
         print("Using the original LSTM model.\n")
@@ -43,18 +45,22 @@ def main(
     criterion_intents = nn.CrossEntropyLoss()
 
     if not is_train:
+        # load saved informations from the bin folder
         checkpoint = torch.load(path)
         model.load_state_dict(checkpoint['model'])
         lang = checkpoint["lang"]
         test_data = checkpoint["test_data"]
         print("Loading the model\n")
         print("Evaluating...")
+        # run one evaluation and show the results
         results_test, intent_test, _ = eval_loop(test_data, criterion_slots, criterion_intents, model, lang)
         print('Slot F1: ', results_test['total']['f'])
         print('Intent Accuracy:', intent_test['accuracy'])
     else:
+        # initialize the weights of the model
         model.apply(init_weights)
         print("Training...")
+        # train the model on the retrieve data
         train(data, model, optimizer, criterion_slots, criterion_intents, clip=clip)
 
 if __name__ == "__main__":
@@ -66,4 +72,4 @@ if __name__ == "__main__":
     train_path = os.path.join('..','..','datasets','ATIS','train.json')
     test_path = os.path.join('..','..','datasets','ATIS','test.json')
 
-    main(train_path, test_path, device=DEVICE, model_type="bidirectional", is_train=False)
+    main(train_path, test_path, device=DEVICE, model_type="lstm_original", is_train=True)
