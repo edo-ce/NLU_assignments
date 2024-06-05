@@ -3,7 +3,7 @@ import torch.nn as nn
 
 # module to fine-tune BERT for Intent and Slot classification
 class BertIAS(nn.Module):
-    def __init__(self, model_name, num_intents, num_slots):
+    def __init__(self, model_name, num_intents, num_slots, name="bert_ias"):
         super(BertIAS, self).__init__()
 
         # Load pretrained BERT model
@@ -17,6 +17,8 @@ class BertIAS(nn.Module):
 
         # Dropout
         self.dropout = nn.Dropout(self.bert.config.hidden_dropout_prob)
+
+        self.name = name
 
     def forward(self, input_ids, attention_mask, token_type_ids):
         # BERT outputs
