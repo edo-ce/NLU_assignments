@@ -2,7 +2,7 @@ from transformers import BertModel
 import torch.nn as nn
 
 class BertABSA(nn.Module):
-    def __init__(self, model_name, num_aspects):
+    def __init__(self, model_name, num_aspects, name="bert_absa"):
         super(BertABSA, self).__init__()
 
         # Load pretrained BERT model
@@ -13,6 +13,8 @@ class BertABSA(nn.Module):
 
         # Dropout
         self.dropout = nn.Dropout(self.bert.config.hidden_dropout_prob)
+
+        self.name = name
 
     def forward(self, input_ids, attention_mask, token_type_ids):
         # BERT outputs

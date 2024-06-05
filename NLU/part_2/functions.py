@@ -2,13 +2,24 @@
 # Here is where you define the architecture of your model using pytorch
 import torch
 import numpy as np
+import random
 import os
 from conll import evaluate
 from sklearn.metrics import classification_report
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 
 SAVING_PATH = os.path.join("..", "..", "bin")
+
+def seed_everything(seed=1234):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    print("Seed setted.")
+    
+seed_everything()
 
 # function used to train the model
 def train_loop(data, optimizer, criterion_slots, criterion_intents, model, clip=5):

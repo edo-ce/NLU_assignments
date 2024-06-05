@@ -2,12 +2,26 @@ import torch
 import torch.nn as nn
 import torch.optim as optim
 import math
+import random
 import numpy as np
 import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 import copy
 from utils import DEVICE
+
+SAVING_PATH = os.path.join("..", "..", "bin")
+
+def seed_everything(seed=1234):
+    random.seed(seed)
+    os.environ['PYTHONHASHSEED'] = str(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
+    torch.backends.cudnn.deterministic = True
+    print("Seed setted.")
+    
+seed_everything()
 
 def train_loop(data, optimizer, criterion, model, clip=5):
     model.train()

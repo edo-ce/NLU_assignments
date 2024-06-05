@@ -6,6 +6,8 @@ import matplotlib.pyplot as plt
 from tqdm import tqdm
 from evals import evaluate_ote
 
+SAVING_PATH = os.path.join("..", "..", "bin")
+
 def train_loop(data, optimizer, criterion, model, clip=5):
     model.train()
     loss_array = []

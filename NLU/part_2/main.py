@@ -59,4 +59,4 @@ if __name__ == "__main__":
     train_path = os.path.join('..','..','datasets','ATIS','train.json')
     test_path = os.path.join('..','..','datasets','ATIS','test.json')
 
-    main(train_path, test_path, device=DEVICE, is_train=True)
+    main(train_path, test_path, device=DEVICE, is_train=False)

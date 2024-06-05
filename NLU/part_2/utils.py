@@ -8,7 +8,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer
 
 PAD_TOKEN = 0
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 # class to convert labels to ids and vice versa
 class Lang():
@@ -203,7 +203,7 @@ def get_data(train_path, test_path):
 
     print('Train samples:', len(tmp_train_raw))
     print('Test samples:', len(test_raw))
-    pprint(tmp_train_raw[0])
+    # pprint(tmp_train_raw[0])
     print()
 
     intents = get_intents(tmp_train_raw, test_raw)

@@ -6,7 +6,7 @@ from torch.utils.data import Dataset, DataLoader
 from transformers import AutoTokenizer
 
 PAD_TOKEN = 0
-DEVICE = 'cuda' if torch.cuda.is_available() else 'cpu'
+DEVICE = 'cuda:0' if torch.cuda.is_available() else 'cpu'
 
 # class to convert labels to ids and vice versa
 class Lang():
@@ -103,24 +103,7 @@ def read_file(path):
     
     return dataset
 
-# Loading the corpus
-def read_file(path):
-    dataset = []
-    with open(path, "r", encoding="utf8") as f:
-        for line in f.readlines():
-            line = line.strip().split("####")
-            sentence = process_text(line[0]).split()
-            if len(sentence) != len(line[1].split()):
-                print(line[0])
-                print(sentence)
-            tags = line[1].split()
-            words = [word.split('=')[0] for word in tags]
-            aspects = [aspect.split('=')[1] for aspect in tags]
-            data = {"sentence": sentence, "words": words, "aspects": aspects}
-
-            dataset.append(data)
-    return dataset
-
+# function to retrieve the aspects
 def get_aspects(train, dev, test):
     aspects = set()
     for data in (train + dev + test):
