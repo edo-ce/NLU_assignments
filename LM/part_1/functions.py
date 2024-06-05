@@ -4,7 +4,6 @@ import math
 import numpy as np
 import os
 import random
-import matplotlib.pyplot as plt
 from tqdm import tqdm
 import copy
 from utils import DEVICE
@@ -102,10 +101,16 @@ def train(data, model, optimizer, criterion_train, criterion_eval, clip=5, n_epo
                 break
 
     best_model.to(DEVICE)
+    
+    # select what to save
+    saving_obj = {
+        "model": best_model.state_dict(),
+        "test_data": data["test"]
+    }
+
+    # save the model in the bin folder
+    path = os.path.join(SAVING_PATH, best_model.name + ".pt")
+    torch.save(saving_obj, path)
+
     final_ppl,  _ = eval_loop(data["test"], criterion_eval, best_model)
     print('Test ppl: ', final_ppl)
-
-def save_model(model_name, obj):
-    PATH = os.path.join("bin", model_name)
-    saving_object = obj
-    torch.save(saving_object, PATH)
