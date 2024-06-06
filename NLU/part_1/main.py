@@ -1,7 +1,3 @@
-# This file is used to run your functions and print the results
-# Please write your fuctions or classes in the functions.py
-
-# Import everything from functions.py file
 from functions import *
 from model import *
 from utils import *
@@ -12,7 +8,7 @@ def main(
         test_path,
         hid_size = 200,
         emb_size = 300,
-        lr=0.0001, # 0.0001
+        lr=0.0001,
         clip=5,
         device='cuda:0',
         model_type="bidirectional_dropout",

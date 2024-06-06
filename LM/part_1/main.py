@@ -7,7 +7,7 @@ def main(
         train_path,
         dev_path,
         test_path,
-        hid_size = 300, # 200 original
+        hid_size = 300,
         emb_size = 300,
         lr=0.0001,
         clip=5,
@@ -34,7 +34,7 @@ def main(
         optimizer = optim.AdamW(model.parameters(), lr=lr)
         model.name += "_adam"
     else:
-        optimizer = optim.SGD(model.parameters(), lr=lr)    
+        optimizer = optim.SGD(model.parameters(), lr=lr)
 
     criterion_train = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"])
     criterion_eval = nn.CrossEntropyLoss(ignore_index=lang.word2id["<pad>"], reduction='sum')
