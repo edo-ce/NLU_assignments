@@ -114,14 +114,11 @@ def collate_fn(data):
         '''
         lengths = [len(seq) for seq in sequences]
         max_len = 1 if max(lengths)==0 else max(lengths)
-        # Pad token is zero in our case
-        # So we create a matrix full of PAD_TOKEN (i.e. 0) with the shape
-        # batch_size X maximum length of a sequence
+        # create a matrix full of pad_token with the shape batch_size X maximum length of a sequence
         padded_seqs = torch.LongTensor(len(sequences),max_len).fill_(pad_token)
         for i, seq in enumerate(sequences):
             end = lengths[i]
             padded_seqs[i, :end] = seq # We copy each sequence into the matrix
-        # print(padded_seqs)
         padded_seqs = padded_seqs.detach()  # We remove these tensors from the computational graph
         return padded_seqs, lengths
     # Sort data by seq lengths
@@ -141,7 +138,6 @@ def collate_fn(data):
     y_aspects = y_aspects.to(DEVICE)
     y_lengths = torch.LongTensor(y_lengths).to(DEVICE)
 
-    # new_item["words"] = new_item["input_ids"]
     # 2-dimensional vector (examples x max_number of tokens in the batch)
     new_item["input_ids"] = src_wrd
     new_item["attention_mask"] = src_mask

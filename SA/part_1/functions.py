@@ -2,7 +2,6 @@ import torch
 import numpy as np
 import random
 import os
-from sklearn.metrics import classification_report
 from tqdm import tqdm
 from evals import evaluate_ote
 
@@ -41,8 +40,8 @@ def eval_loop(data, criterion, model, lang):
 
     ref_aspects = []
     hyp_aspects = []
-    #softmax = nn.Softmax(dim=1) # Use Softmax if you need the actual probability
-    with torch.no_grad(): # It used to avoid the creation of computational graph
+    
+    with torch.no_grad():
         for sample in data:
             aspects = model(sample['input_ids'], sample['attention_mask'], sample['token_type_ids'])
             loss = criterion(aspects, sample['y_aspects'])
@@ -66,6 +65,7 @@ def eval_loop(data, criterion, model, lang):
                 ref_aspects.append(gt_aspects)
                 hyp_aspects.append(out_aspects)
                 
+    # call evaluation function
     results = evaluate_ote(ref_aspects, hyp_aspects)
     
     return results, loss_array
