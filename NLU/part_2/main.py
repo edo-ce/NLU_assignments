@@ -42,9 +42,10 @@ def main(
         print("Loading the model\n")
         print("Evaluating...")
         # run one evaluation and show the results
-        results_test, intent_test, _ = eval_loop(test_data, criterion_slots, criterion_intents, model, lang)
+        results_test, intent_test, losses = eval_loop(test_data, criterion_slots, criterion_intents, model, lang)
         print('Slot F1: ', results_test['total']['f'])
         print('Intent Accuracy:', intent_test['accuracy'])
+        print(losses)
     else:
         print("Training...")
         # train the model on the retrieve data

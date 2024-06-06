@@ -47,7 +47,7 @@ def eval_loop(data, eval_criterion, model):
     number_of_tokens = []
     with torch.no_grad(): # It used to avoid the creation of computational graph
         for sample in data:
-            output = model(sample['source'], training=False)
+            output = model(sample['source'], training=True)
             loss = eval_criterion(output, sample['target'])
             loss_array.append(loss.item())
             number_of_tokens.append(sample["number_tokens"])
@@ -95,7 +95,7 @@ def train(data, model, optimizer, criterion_train, criterion_eval, clip=5, n_epo
             # Non-monotonically Triggered AvSGD
             if isinstance(optimizer, optim.SGD) and 't0' not in optimizer.param_groups[0] and len(dev_perplexities) > num_trials and ppl_dev > min(dev_perplexities[:-num_trials]):
                 print("change to AvSGD")
-                optimizer = optim.ASGD(model.parameters(), lr=optimizer.param_groups[0]['lr'], t0=0, lambd=0., weight_decay=1e-6)
+                optimizer = optim.ASGD(model.parameters(), lr=0.5, t0=0, lambd=0., weight_decay=1e-6)
             dev_perplexities.append(ppl_dev)
 
             losses_dev.append(np.asarray(loss_dev).mean())

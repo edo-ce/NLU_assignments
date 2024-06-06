@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torch.autograd import Variable
 from utils import DEVICE
 
@@ -20,7 +21,7 @@ class VariationalDropout(nn.Module):
         return mask * x
 
 class LM_LSTM_REGULARIZED(nn.Module):
-    def __init__(self, emb_size, hidden_size, output_size, pad_index=0, is_dropout=True, dropout=0.1, n_layers=1):
+    def __init__(self, emb_size, hidden_size, output_size, pad_index=0, is_dropout=True, dropout=0.1, n_layers=1, name="lstm_regularized"):
         super(LM_LSTM_REGULARIZED, self).__init__()
         # Token ids to vectors
         self.embedding = nn.Embedding(output_size, emb_size, padding_idx=pad_index)
@@ -30,6 +31,7 @@ class LM_LSTM_REGULARIZED(nn.Module):
         self.output = self.embedding.weight
         self.dropout = VariationalDropout(dropout)
         self.is_dropout = is_dropout
+        self.name = name
 
     def forward(self, input_sequence, training=True):
         emb = self.embedding(input_sequence)
