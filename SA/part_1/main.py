@@ -5,15 +5,13 @@
 from functions import *
 from utils import *
 from model import *
-import os
+import torch.optim as optim
 
 def main(
         train_path,
         dev_path,
         test_path,
-        hid_size = 300, # 200 original
-        emb_size = 300,
-        lr=1.5, # 0.0001
+        lr=0.00001,
         clip=5,
         device='cuda:0',
         is_train=False
@@ -23,12 +21,11 @@ def main(
     data = get_data(train_path, dev_path, test_path)
     lang = data["lang"]
 
-    # TODO: get the number of aspects
     num_aspects = len(lang.aspect2id)
 
     # initialize the model
-    model_name = "bert-base-cased"
-    model = BertABSA(model_name, num_aspects)
+    model_name = "bert-base-uncased"
+    model = BertABSA(model_name, num_aspects).to(DEVICE)
     
     path = os.path.join(SAVING_PATH, model.name + ".pt")
 
@@ -46,9 +43,14 @@ def main(
         print("Loading the model\n")
         print("Evaluating...")
         # run one evaluation and show the results
+        results_test, _ = eval_loop(test_data, criterion, model, lang)
+        print("Precision: ", results_test[0])
+        print("Recall: ", results_test[1])
+        print("F1 score: ", results_test[2])
     else:
         print("Training...")
         # train the model on the retrieve data
+        train(data, model, optimizer, criterion)
 
 
 if __name__ == "__main__":
@@ -61,4 +63,4 @@ if __name__ == "__main__":
     dev_path = os.path.join('..','..','datasets','SemEval_2014_Task_4','laptop14_dev.txt')
     test_path = os.path.join('..','..','datasets','SemEval_2014_Task_4','laptop14_test.txt')
 
-    main(train_path, dev_path, test_path, device=DEVICE, is_train=True)
+    main(train_path, dev_path, test_path, device=DEVICE, is_train=False)

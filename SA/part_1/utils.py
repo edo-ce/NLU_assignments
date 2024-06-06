@@ -58,19 +58,15 @@ class AspectTerms(Dataset):
         self.words = []
         self.aspects = []
 
-        self.words = dataset["words"]
-        self.aspects = [lang.aspect2id[aspect] for aspect in dataset["aspects"]]
         for x in dataset:
             self.words.append(x['words'])
             aspects = [lang.aspect2id[aspect] for aspect in x['aspects']]
             self.aspects.append(aspects)
 
         self.tokenized_data = lang.tokenize(self.words, self.aspects)
-        for i in range(len(self.sentences)):
-            self.tokenized_data[i]["sentence"] = self.sentences[i]
 
     def __len__(self):
-        return len(self.sentences)
+        return len(self.words)
 
     def __getitem__(self, idx):
         item = self.tokenized_data[idx]
@@ -78,8 +74,7 @@ class AspectTerms(Dataset):
             "input_ids": torch.tensor(item["input_ids"]),
             "attention_mask": torch.tensor(item["attention_mask"]),
             "token_type_ids": torch.tensor(item["token_type_ids"]),
-            "aspects": torch.tensor(item["aspects"]),
-            "sentence": item["sentence"]
+            "aspects": torch.tensor(item["aspects"])
         }
 
 # function to retrieve data from the file
@@ -110,18 +105,6 @@ def get_aspects(train, dev, test):
         for aspect in data["aspects"]:
             aspects.add(aspect)
     return aspects
-
-# function to split train data into train and dev
-def split_test(tmp_train, portion=0.1):
-    
-    random.shuffle(tmp_train)
-
-    split_index = int(len(tmp_train) * (1-portion))
-
-    X_train = tmp_train[:split_index]
-    X_dev = tmp_train[split_index:]
-
-    return X_train, X_dev
 
 # function to use for the pytorch Dataloader collate_fn
 def collate_fn(data):
@@ -173,20 +156,13 @@ def get_data(train_path, dev_path, test_path):
     dev_raw = read_file(dev_path)
     test_raw = read_file(test_path)
 
-    print('Train samples:', len(train_raw))
-    print('Dev samples:', len(dev_raw))
-    print('Test samples:', len(test_raw))
-    print(train_raw[0])
-    print()
+    print('TRAIN size:', len(train_raw))
+    print('DEV size:', len(dev_raw))
+    print('TEST size:', len(test_raw), '\n')
 
     aspects = get_aspects(train_raw, dev_raw, test_raw)
 
     lang = Lang(aspects)
-
-    print('Train data has been splitted')
-    print('TRAIN size:', len(train_raw))
-    print('DEV size:', len(dev_raw))
-    print('TEST size:', len(test_raw), '\n')
 
     train_dataset = AspectTerms(train_raw, lang)
     dev_dataset = AspectTerms(dev_raw, lang)
