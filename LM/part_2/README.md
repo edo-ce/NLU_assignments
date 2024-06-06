@@ -1,8 +1,8 @@
-# Assignment 3 - part 1
+# Assignment 1 - part 2
 
-To run the code in testing mode from the folder path edoardo_cecchinato_247434/SA/part_1:
+To run the code in testing mode from the folder path edoardo_cecchinato_247434/LM/part_2:
 ```console
-disi@lab000001:~/edoardo_cecchinato_247434/SA/part_1$ python3 main.py
+disi@lab000001:~/edoardo_cecchinato_247434/LM/part_2$ python3 main.py
 ```
 
 If you want to change to training mode, you can change the parameter *is_train* when call the main function:
