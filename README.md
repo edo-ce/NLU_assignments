@@ -1,5 +1,7 @@
 # NLU Project Assignments 2023/24
 
+### Edoardo Cecchinato (247434)
+
 To run the code you should enter a part folder for an assignment and run the file main.py.
 This is an example of how to run assignment LM part 1:
 ```console
